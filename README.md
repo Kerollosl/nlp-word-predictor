@@ -1,9 +1,5 @@
 # NLP Word Predictor 📝
 
-## Kerollos Lowandy
-
-**Repository:** [nlp-word-predictor](https://github.com/Kerollosl/nlp-word-predictor)
-
 ## 📋 Overview
 
 A natural language processing project that predicts the next word in a sequence using LSTM neural networks trained on the King James Bible. The model learns language patterns and can generate contextually appropriate word predictions.
@@ -113,16 +109,3 @@ The model learns:
 - Common word sequences
 - Contextual word relationships
 
-## 👤 Author
-
-**Kerollos Lowandy**
-- GitHub: [@Kerollosl](https://github.com/Kerollosl)
-- Email: klowandy@gmail.com
-
-## 📄 License
-
-This project is available for educational and research purposes.
-
----
-
-**Last Updated:** March 27, 2026
