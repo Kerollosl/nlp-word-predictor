@@ -1,3 +1,4 @@
+# Historical experiment helpers. The documented CLI pipeline is canonical.
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -96,3 +97,4 @@ def plot_metrics(history):
     plt.title('Training loss')
     plt.legend()
     plt.show()
+
