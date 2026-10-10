@@ -1,41 +1,23 @@
+import argparse,json
+from pathlib import Path
 import numpy as np
-from tensorflow.keras.models import load_model
-from functions import n_gram_seqs, fit_tokenizer_on_corpus
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-FILE = './bible.txt'
-SPLIT = '.'
-model = load_model('./model.h5')
-seed_text = input("Start the NLP word prediction with seed text: ")
-
-while True:
-    try:
-        next_words = int(input("How many next words would you like the model to predict: "))
-        break
-    except ValueError:
-        print("ERROR: You must enter an integer value for the number of next words to predict. Try again.\n")
-print('\n')
-
-corpus, tokenizer = fit_tokenizer_on_corpus(FILE, SPLIT)
-input_sequences = n_gram_seqs(corpus, tokenizer)
-max_sequence_len = max([len(x) for x in input_sequences])
-
-for i in range(next_words):
-    # Convert the text into sequences
-    token_list = tokenizer.texts_to_sequences([seed_text])[0]
-    # Pad the sequences
-    token_list = pad_sequences([token_list], maxlen=max_sequence_len - 1, padding='pre')
-    # Get the probabilities of predicting a word
-    predicted = model.predict(token_list, verbose=0)
-    # Choose the next word based on the maximum probability
-    predicted = np.argmax(predicted, axis=-1).item()
-    # Get the actual word from the word index
-    output_word = tokenizer.index_word[predicted]
-    # Append to the current text
-
-    if (i+1) % 15 == 0:
-        seed_text += '\n' + output_word
-    else:
-        seed_text += " " + output_word
-
-print(seed_text)
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument("seed_text");ap.add_argument("--words",type=int,default=30);ap.add_argument("--artifacts",type=Path,default=Path("artifacts"));ap.add_argument("--temperature",type=float,default=0);ap.add_argument("--seed",type=int,default=42)
+    args=ap.parse_args()
+    if not 1<=args.words<=1000 or args.temperature<0:ap.error("Words must be 1..1000 and temperature nonnegative")
+    import tensorflow as tf
+    from tensorflow.keras.preprocessing.text import tokenizer_from_json
+    from tensorflow.keras.preprocessing.sequence import pad_sequences
+    tokenizer=tokenizer_from_json((args.artifacts/"tokenizer.json").read_text());context=json.loads((args.artifacts/"metadata.json").read_text())["context"]
+    model=tf.keras.models.load_model(args.artifacts/"model.keras");rng=np.random.default_rng(args.seed);text=args.seed_text
+    for _ in range(args.words):
+        tokens=tokenizer.texts_to_sequences([text])[0]
+        if not tokens:raise ValueError("Seed text contains no tokens")
+        scores=np.asarray(model.predict(pad_sequences([tokens],maxlen=context,padding="pre"),verbose=0)[0],dtype=float);scores[0]=0
+        if args.temperature:
+            scores=np.exp(np.log(np.maximum(scores,1e-30))/args.temperature-np.max(np.log(np.maximum(scores,1e-30))/args.temperature));scores[0]=0;scores/=scores.sum();index=int(rng.choice(len(scores),p=scores))
+        else:index=int(scores.argmax())
+        text+=' '+tokenizer.index_word.get(index,'<OOV>')
+    print(text)
+if __name__=="__main__":main()
